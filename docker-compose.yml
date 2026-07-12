@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # =========================================================
+  # 1. PostgreSQL Database Service
+  # =========================================================
+  database:
+    image: postgres:15-alpine
+    container_name: architectai-postgres
+    environment:
+      POSTGRES_DB: architectdb
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: secret_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa -d architectdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - architect-network
+
+  # =========================================================
+  # 2. Redis Cache Service
+  # =========================================================
+  cache:
+    image: redis:7-alpine
+    container_name: architectai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes --requirepass secret_redis_password
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - architect-network
+
+  # =========================================================
+  # 3. Spring Boot Java Backend REST API Service
+  # =========================================================
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend-java.Dockerfile
+    container_name: architectai-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/architectdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=secret_password_change_me
+      - SPRING_REDIS_HOST=cache
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=secret_redis_password
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - architect-network
+
+  # =========================================================
+  # 4. React Frontend Web Server Service (Nginx)
+  # =========================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend-react.Dockerfile
+    container_name: architectai-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - architect-network
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  architect-network:
+    driver: bridge
