@@ -78,12 +78,4 @@ To launch ArchitectAI locally or deploy it to cloud container services, consult 
 - **[Docker Deployment Manual](./docs/deployment.md)**: Covers running local container networks using Docker Compose and deploying single or multi-tier instances on AWS or GCP.
 - **[REST API Specification](./docs/api.md)**: Documents request/response JSON contracts for custom integrations.
 
----
 
-## 💼 Portfolios & Career Showcase
-
-This repository is optimized to serve as an outstanding career showcase for Senior/Staff Software Engineer interviews. 
-
-We have compiled pre-written, highly persuasive descriptions of this project for your **ATS Resumes, LinkedIn updates, GitHub descriptions, and portfolios**.
-
-👉 **[Access the Resume Portfolio Kit Here](./docs/resume.md)**
